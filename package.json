@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build --outDir minigames && mv minigames/src/index.html ./ && rm -r minigames/src",
+    "build": "vite build && mv dist/src/index.html ./ && rm -r dist/src",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
