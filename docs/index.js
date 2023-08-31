@@ -89,6 +89,12 @@ function listen(node, event, handler, options) {
   node.addEventListener(event, handler, options);
   return () => node.removeEventListener(event, handler, options);
 }
+function prevent_default(fn) {
+  return function(event) {
+    event.preventDefault();
+    return fn.call(this, event);
+  };
+}
 function attr(node, attribute, value) {
   if (value == null)
     node.removeAttribute(attribute);
@@ -100,13 +106,6 @@ function children(element2) {
 }
 function set_input_value(input, value) {
   input.value = value == null ? "" : value;
-}
-function set_style(node, key, value, important) {
-  if (value == null) {
-    node.style.removeProperty(key);
-  } else {
-    node.style.setProperty(key, value, important ? "important" : "");
-  }
 }
 let current_component;
 function set_current_component(component) {
@@ -186,11 +185,33 @@ function flush_render_callbacks(fns) {
   render_callbacks = filtered;
 }
 const outroing = /* @__PURE__ */ new Set();
+let outros;
 function transition_in(block, local) {
   if (block && block.i) {
     outroing.delete(block);
     block.i(local);
   }
+}
+function transition_out(block, local, detach2, callback) {
+  if (block && block.o) {
+    if (outroing.has(block))
+      return;
+    outroing.add(block);
+    outros.c.push(() => {
+      outroing.delete(block);
+      if (callback) {
+        if (detach2)
+          block.d(1);
+        callback();
+      }
+    });
+    block.o(local);
+  } else if (callback) {
+    callback();
+  }
+}
+function create_component(block) {
+  block && block.c();
 }
 function mount_component(component, target, anchor) {
   const { fragment, after_update } = component.$$;
@@ -336,6 +357,93 @@ class SvelteComponent {
 const PUBLIC_VERSION = "4";
 if (typeof window !== "undefined")
   (window.__svelte || (window.__svelte = { v: /* @__PURE__ */ new Set() })).v.add(PUBLIC_VERSION);
+function create_fragment$2(ctx) {
+  let nav;
+  let ul0;
+  let li0;
+  let a0;
+  let t2;
+  let ul2;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      nav = element("nav");
+      ul0 = element("ul");
+      li0 = element("li");
+      a0 = element("a");
+      a0.innerHTML = `<strong>Multiplayer Puzzle Collection by <i>IHopeYouLikeApples</i></strong>`;
+      t2 = space();
+      ul2 = element("ul");
+      ul2.innerHTML = `<li><details role="list" dir="rtl"><summary aria-haspopup="listbox" role="link" class="secondary">All Puzzles</summary> <ul role="listbox"><li><a href="/minigames/"><i>Lobby</i></a></li> <li><a href="/minigames/">Inertia</a></li> <li><a href="/minigames/">Tic Tac Two</a></li></ul></details></li>`;
+      attr(a0, "href", "./");
+      attr(a0, "class", "contrast");
+      attr(nav, "class", "container-fluid");
+    },
+    m(target, anchor) {
+      insert(target, nav, anchor);
+      append(nav, ul0);
+      append(ul0, li0);
+      append(li0, a0);
+      append(nav, t2);
+      append(nav, ul2);
+      if (!mounted) {
+        dispose = listen(a0, "click", prevent_default(click_handler));
+        mounted = true;
+      }
+    },
+    p: noop,
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(nav);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+const click_handler = () => {
+};
+class Header extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, null, create_fragment$2, safe_not_equal, {});
+  }
+}
+const Footer_svelte_svelte_type_style_lang = "";
+function create_fragment$1(ctx) {
+  let footer;
+  return {
+    c() {
+      footer = element("footer");
+      footer.innerHTML = `<small>Built with <a href="https://svelte.dev/" class="secondary">Svelte</a>,
+        <a href="https://peerjs.com/" class="secondary">PeerJS</a>
+        and <a href="https://picocss.com" class="secondary">Pico</a>
+        •
+        <a href="https://github.com/i-hope-you-like-apples/minigames" class="secondary">Source code</a></small>`;
+      attr(footer, "class", "container-fluid svelte-e5guu7");
+    },
+    m(target, anchor) {
+      insert(target, footer, anchor);
+    },
+    p: noop,
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(footer);
+      }
+    }
+  };
+}
+class Footer extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, null, create_fragment$1, safe_not_equal, {});
+  }
+}
 function getDefaultExportFromCjs(x) {
   return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, "default") ? x["default"] : x;
 }
@@ -7873,133 +7981,248 @@ var $26088d7da5b03f69$export$ecd1fc136c422448 = (
     return $26088d7da5b03f69$export$ecd1fc136c4224482;
   }($ac9b757d51178e15$exports.EventEmitter)
 );
-var $70d766613f57b014$export$2e2bcd8739ae039 = $26088d7da5b03f69$exports.Peer;
+$26088d7da5b03f69$exports.Peer;
+class Host {
+  constructor(onConnect, onData, onDisconnect) {
+    __publicField(this, "peer");
+    __publicField(this, "connection", null);
+    __publicField(this, "onConnect");
+    __publicField(this, "onData");
+    __publicField(this, "onDisconnect");
+    this.onConnect = onConnect;
+    this.onData = onData;
+    this.onDisconnect = onDisconnect;
+    this.peer = new $26088d7da5b03f69$export$ecd1fc136c422448({ debug: 2 });
+    this.peer.on("open", function(id) {
+      console.log("Hosting ID is: " + id);
+      console.log("Awaiting connection...");
+    });
+    this.peer.on("connection", (connection) => {
+      console.log("Connection established!");
+      this.connection = connection;
+    });
+    this.peer.on("disconnected", () => {
+      console.log("Disconnected!");
+    });
+    this.peer.on("close", () => {
+      console.log("Connection closed!");
+    });
+    this.peer.on("error", (err) => {
+      console.log(err);
+    });
+  }
+}
+class Client {
+  constructor(hostId, onConnect, onData, onDisconnect) {
+    __publicField(this, "peer");
+    __publicField(this, "connection", null);
+    __publicField(this, "onConnect");
+    __publicField(this, "onData");
+    __publicField(this, "onDisconnect");
+    this.onConnect = onConnect;
+    this.onData = onData;
+    this.onDisconnect = onDisconnect;
+    this.peer = new $26088d7da5b03f69$export$ecd1fc136c422448({ debug: 2 });
+    this.peer.on("open", function(id) {
+      console.log("Opened ID is: " + id);
+    });
+    this.peer.on("connection", function(connection2) {
+      connection2.on("open", function() {
+        connection2.send("Sender does not accept incoming connections");
+        setTimeout(function() {
+          connection2.close();
+        }, 500);
+      });
+    });
+    this.peer.on("disconnected", function() {
+      console.log("Connection lost. Please reconnect");
+    });
+    this.peer.on("close", function() {
+      console.log("Connection destroyed");
+    });
+    this.peer.on("error", function(err) {
+      console.log(err);
+    });
+    let connection = this.peer.connect(hostId, { reliable: true });
+    connection.on("open", function() {
+      console.log("Connected to: " + connection.peer);
+    });
+    connection.on("data", function(data) {
+      console.log("Data received:" + data);
+    });
+    connection.on("close", function() {
+      console.log("Connection closed");
+    });
+  }
+}
+const App_svelte_svelte_type_style_lang = "";
 function create_fragment(ctx) {
+  let header;
+  let t0;
   let main;
+  let article;
+  let div0;
   let h1;
-  let t1;
-  let p;
+  let t2;
+  let form;
+  let input;
   let t3;
   let button0;
   let t5;
-  let input;
-  let t6;
   let button1;
+  let t7;
+  let div1;
+  let t8;
+  let footer;
+  let current;
   let mounted;
   let dispose;
+  header = new Header({});
+  footer = new Footer({});
   return {
     c() {
+      create_component(header.$$.fragment);
+      t0 = space();
       main = element("main");
+      article = element("article");
+      div0 = element("div");
       h1 = element("h1");
-      h1.textContent = "Hello, I hope you like apples";
-      t1 = space();
-      p = element("p");
-      p.textContent = "Here are some minigames for you!";
+      h1.textContent = "Welcome!";
+      t2 = space();
+      form = element("form");
+      input = element("input");
       t3 = space();
       button0 = element("button");
-      button0.textContent = "Click to host a game";
+      button0.textContent = "Play!";
       t5 = space();
-      input = element("input");
-      t6 = space();
       button1 = element("button");
-      button1.textContent = "Click to join a game";
-      set_style(h1, "margin-top", "55px");
+      button1.textContent = "Create a private room";
+      t7 = space();
+      div1 = element("div");
+      t8 = space();
+      create_component(footer.$$.fragment);
+      attr(h1, "class", "svelte-nkxx9r");
       attr(input, "type", "text");
-      attr(input, "placeholder", "Enter a game peer ID");
-      attr(main, "class", "container");
+      attr(input, "name", "nickname");
+      attr(input, "placeholder", "Your nickname");
+      attr(input, "aria-label", "Your nickname");
+      attr(input, "autocomplete", "nickname");
+      attr(button0, "type", "submit");
+      attr(button1, "type", "submit");
+      attr(button1, "class", "contrast");
+      attr(div0, "class", "svelte-nkxx9r");
+      attr(div1, "class", "svelte-nkxx9r");
+      attr(article, "class", "grid svelte-nkxx9r");
+      attr(main, "class", "container svelte-nkxx9r");
     },
     m(target, anchor) {
+      mount_component(header, target, anchor);
+      insert(target, t0, anchor);
       insert(target, main, anchor);
-      append(main, h1);
-      append(main, t1);
-      append(main, p);
-      append(main, t3);
-      append(main, button0);
-      append(main, t5);
-      append(main, input);
+      append(main, article);
+      append(article, div0);
+      append(div0, h1);
+      append(div0, t2);
+      append(div0, form);
+      append(form, input);
       set_input_value(
         input,
-        /*peerId*/
+        /*name*/
         ctx[0]
       );
-      append(main, t6);
-      append(main, button1);
+      append(form, t3);
+      append(form, button0);
+      append(form, t5);
+      append(form, button1);
+      append(article, t7);
+      append(article, div1);
+      insert(target, t8, anchor);
+      mount_component(footer, target, anchor);
+      current = true;
       if (!mounted) {
         dispose = [
-          listen(
-            button0,
-            "click",
-            /*handleHost*/
-            ctx[1]
-          ),
           listen(
             input,
             "input",
             /*input_input_handler*/
             ctx[3]
           ),
-          listen(
-            button1,
-            "click",
-            /*handleJoin*/
+          listen(button0, "click", prevent_default(
+            /*joinRoom*/
             ctx[2]
-          )
+          )),
+          listen(button1, "click", prevent_default(
+            /*createRoom*/
+            ctx[1]
+          ))
         ];
         mounted = true;
       }
     },
     p(ctx2, [dirty]) {
-      if (dirty & /*peerId*/
-      1 && input.value !== /*peerId*/
+      if (dirty & /*name*/
+      1 && input.value !== /*name*/
       ctx2[0]) {
         set_input_value(
           input,
-          /*peerId*/
+          /*name*/
           ctx2[0]
         );
       }
     },
-    i: noop,
-    o: noop,
+    i(local) {
+      if (current)
+        return;
+      transition_in(header.$$.fragment, local);
+      transition_in(footer.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(header.$$.fragment, local);
+      transition_out(footer.$$.fragment, local);
+      current = false;
+    },
     d(detaching) {
       if (detaching) {
+        detach(t0);
         detach(main);
+        detach(t8);
       }
+      destroy_component(header, detaching);
+      destroy_component(footer, detaching);
       mounted = false;
       run_all(dispose);
     }
   };
 }
 function instance($$self, $$props, $$invalidate) {
-  let peerId = "";
-  function handleHost() {
-    let peer = new $70d766613f57b014$export$2e2bcd8739ae039();
-    peer.on("open", function(id) {
-      console.log("My peer ID is: " + id);
-    });
-    peer.on("connection", function(conn) {
-      conn.on("data", function(data) {
-        console.log(data);
-        conn.send("Hello back!");
-      });
-    });
+  let name = "";
+  function createRoom() {
+    new Host(
+      (data) => {
+      },
+      (data) => {
+      },
+      () => {
+      }
+    );
   }
-  function handleJoin() {
-    let peer = new $70d766613f57b014$export$2e2bcd8739ae039();
-    console.log(peerId);
-    let conn = peer.connect(peerId);
-    conn.on("open", function() {
-      conn.on("data", function(data) {
-        console.log("Received", data);
-      });
-      conn.send("hi!");
-    });
+  function joinRoom() {
+    new Client(
+      name,
+      (data) => {
+      },
+      (data) => {
+      },
+      () => {
+      }
+    );
   }
   function input_input_handler() {
-    peerId = this.value;
-    $$invalidate(0, peerId);
+    name = this.value;
+    $$invalidate(0, name);
   }
-  return [peerId, handleHost, handleJoin, input_input_handler];
+  return [name, createRoom, joinRoom, input_input_handler];
 }
 class App extends SvelteComponent {
   constructor(options) {

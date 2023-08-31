@@ -1,43 +1,87 @@
 <script lang="ts">
-  import Peer from "peerjs";
+  import Header from "./Header.svelte";
+  import Footer from "./Footer.svelte";
+  import { Host } from "./core/host";
+  import { Client } from "./core/client";
 
-  let peerId = "";
+  let name = "";
 
-  function handleHost() {
-    let peer = new Peer();
-    peer.on("open", function (id) {
-      console.log("My peer ID is: " + id);
-    });
-    peer.on("connection", function (conn) {
-      conn.on("data", function (data) {
-        // Will print 'hi!'
-        console.log(data);
-        conn.send("Hello back!");
-      });
-    });
+  function createRoom() {
+    let host = new Host(
+      (data) => {},
+      (data) => {},
+      () => {}
+    );
   }
 
-  function handleJoin() {
-    let peer = new Peer();
-    console.log(peerId);
-    let conn = peer.connect(peerId);
-    conn.on("open", function () {
-      conn.on("data", function (data) {
-        console.log("Received", data);
-      });
-      conn.send("hi!");
-    });
+  function joinRoom() {
+    let client = new Client(
+      name,
+      (data) => {},
+      (data) => {},
+      () => {}
+    );
   }
 </script>
 
+<Header />
+
 <main class="container">
-  <h1 style="margin-top: 55px;">Hello, I hope you like apples</h1>
-
-  <p>Here are some minigames for you!</p>
-
-  <button on:click={handleHost}>Click to host a game</button>
-
-  <input bind:value={peerId} type="text" placeholder="Enter a game peer ID" />
-
-  <button on:click={handleJoin}>Click to join a game</button>
+  <article class="grid">
+    <div>
+      <h1>Welcome!</h1>
+      <form>
+        <input
+          type="text"
+          name="nickname"
+          placeholder="Your nickname"
+          aria-label="Your nickname"
+          autocomplete="nickname"
+          bind:value={name}
+        />
+        <button type="submit" on:click|preventDefault={joinRoom}>Play!</button>
+        <button
+          type="submit"
+          class="contrast"
+          on:click|preventDefault={createRoom}>Create a private room</button
+        >
+      </form>
+    </div>
+    <div />
+  </article>
 </main>
+
+<Footer />
+
+<style>
+  main {
+    margin-top: 64px;
+  }
+
+  h1 {
+    margin-bottom: 1.5rem;
+  }
+
+  article {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  article div {
+    padding: 1rem;
+  }
+
+  article div:nth-of-type(2) {
+    display: none;
+    background-color: #374956;
+    background-image: url("/minigames/assets/ihopeyoulikeapples.jpg");
+    background-position: bottom;
+    background-size: cover;
+  }
+
+  @media (min-width: 992px) {
+    .grid > div:nth-of-type(2) {
+      display: block;
+    }
+  }
+</style>

@@ -4,9 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build --outDir docs",
-    "preview": "vite preview",
+    "dev": "mkdir minigames && ln -s ../docs/assets minigames/assets && vite; rm -r minigames",
+    "build": "mv docs/assets ./assets.bak && vite build --outDir docs && mv ./assets.bak docs/assets",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {

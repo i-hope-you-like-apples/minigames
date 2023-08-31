@@ -4,6 +4,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 export default defineConfig({
   plugins: [svelte()],
   base: "/minigames/",
+  publicDir: "assets",
   build: {
     rollupOptions: {
       output: {
@@ -12,6 +13,6 @@ export default defineConfig({
         assetFileNames: "[name].[ext]",
       }
     },
-    minify: false,
+    minify: false
   },
 });
