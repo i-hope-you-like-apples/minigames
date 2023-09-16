@@ -1,65 +1,108 @@
 import { Peer } from 'peerjs';
 import type { DataConnection } from 'peerjs';
 
-/**
- * The Client class is responsible for managing the connection to the host.
- * It creates a sender Peer and offers events to listen to for when it successfully
- * connects, sends data and disconnects.
- */
-export class Client {
+import type { Peer as PeerInterface } from './peer';
+import { Player } from "../gaming/player";
+
+export class Client implements PeerInterface {
+    player: Player;
+    allPlayers: Player[] = [];
+
     private peer: Peer;
     private connection: DataConnection | null = null;
-    private onConnect: (data: string) => void;
-    private onData: (data: string) => void;
-    private onDisconnect: () => void;
+    private initPromise: Promise<void>;
+    private roomId: string;
 
-    constructor(
-        hostId: string,
-        onConnect: (data: string) => void,
-        onData: (data: string) => void,
-        onDisconnect: () => void,
-    ) {
-        this.onConnect = onConnect;
-        this.onData = onData;
-        this.onDisconnect = onDisconnect;
+    private newPlayerCallback: ((player: Player) => void) | null = null;
+    private playerLeftCallback: ((player: Player) => void) | null = null;
+
+    onNewPlayer(callback: (player: Player) => void) {
+        this.newPlayerCallback = callback;
+    }
+
+    onPlayerLeft(callback: (player: Player) => void) {
+        this.playerLeftCallback = callback;
+    }
+
+    constructor(roomId: string, player: Player) {
+        this.player = player;
+        this.allPlayers.push(player);
+        this.roomId = roomId;
 
         this.peer = new Peer({ debug: 2 });
 
-        this.peer.on("open", function (id) {
-            console.log("Opened ID is: " + id);
-        });
+        this.initPromise = new Promise((resolve, reject) => {
+            this.peer.on("open", () => {
+                this.player.peerId = this.peer.id;
+                console.log("peer:open> " + this.peer.id);
 
-        this.peer.on('connection', function (connection) {
-            connection.on('open', function () {
-                connection.send("Sender does not accept incoming connections");
-                setTimeout(function () { connection.close(); }, 500);
+                this.connection = this.peer.connect(roomId, { reliable: true });
+
+                this.connection.on("open", () => {
+                    console.log("connection:open> " + this.connection!.peer);
+                    this.connection!.send({
+                        type: "newPlayers",
+                        players: [this.player]
+                    });
+
+                    resolve();
+                });
+
+                this.connection.on("data", (data) => {
+                    this.interceptMessage(data);
+                    console.log("connection:data> " + data);
+                });
+
+                this.connection.on("close", () => {
+                    console.log("connection:close");
+                    reject();
+                });
+
+                this.connection.on("error", (error) => {
+                    console.error("connection:error> " + error);
+                    reject();
+                });
+            });
+
+            this.peer.on("disconnected", () => {
+                console.error("peer:disconnected");
+                reject();
+            });
+
+            this.peer.on("close", () => {
+                console.error("peer:close");
+                reject();
+            });
+
+            this.peer.on("error", (error) => {
+                console.error("peer:error> " + error);
+                reject();
             });
         });
+    }
 
-        this.peer.on('disconnected', function () {
-            console.log('Connection lost. Please reconnect');
-        });
+    public send(data: any) {
+        if (!this.connection) {
+            throw new Error("Connection not established");
+        }
 
-        this.peer.on('close', function () {
-            console.log('Connection destroyed');
-        });
+        this.connection.send(data);
+    }
 
-        this.peer.on('error', function (err) {
-            console.log(err);
-        });
+    public async init() {
+        await this.initPromise;
+    }
 
-        let connection = this.peer.connect(hostId, { reliable: true });
+    public getRoomId() {
+        return this.roomId;
+    }
 
-        connection.on('open', function () {
-            console.log("Connected to: " + connection.peer);
-        });
-
-        connection.on('data', function (data) {
-            console.log("Data received:" + data);
-        });
-
-        connection.on('close', function () {
-            console.log("Connection closed");
-        });
+    private interceptMessage(data: any) {
+        if (data.type === "newPlayers") {
+            data.players.forEach((player: Player) => {
+                this.allPlayers.push(player);
+                this.newPlayerCallback?.(player);
+            });
+        }
     }
 }

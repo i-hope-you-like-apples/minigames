@@ -76,6 +76,12 @@ function detach(node) {
     node.parentNode.removeChild(node);
   }
 }
+function destroy_each(iterations, detaching) {
+  for (let i = 0; i < iterations.length; i += 1) {
+    if (iterations[i])
+      iterations[i].d(detaching);
+  }
+}
 function element(name) {
   return document.createElement(name);
 }
@@ -104,12 +110,27 @@ function attr(node, attribute, value) {
 function children(element2) {
   return Array.from(element2.childNodes);
 }
+function set_data(text2, data) {
+  data = "" + data;
+  if (text2.data === data)
+    return;
+  text2.data = /** @type {string} */
+  data;
+}
 function set_input_value(input, value) {
   input.value = value == null ? "" : value;
 }
 let current_component;
 function set_current_component(component) {
   current_component = component;
+}
+function get_current_component() {
+  if (!current_component)
+    throw new Error("Function called outside component initialization");
+  return current_component;
+}
+function onMount(fn) {
+  get_current_component().$$.on_mount.push(fn);
 }
 const dirty_components = [];
 const binding_callbacks = [];
@@ -186,6 +207,20 @@ function flush_render_callbacks(fns) {
 }
 const outroing = /* @__PURE__ */ new Set();
 let outros;
+function group_outros() {
+  outros = {
+    r: 0,
+    c: [],
+    p: outros
+    // parent group
+  };
+}
+function check_outros() {
+  if (!outros.r) {
+    run_all(outros.c);
+  }
+  outros = outros.p;
+}
 function transition_in(block, local) {
   if (block && block.i) {
     outroing.delete(block);
@@ -209,6 +244,9 @@ function transition_out(block, local, detach2, callback) {
   } else if (callback) {
     callback();
   }
+}
+function ensure_array_like(array_like_or_iterator) {
+  return (array_like_or_iterator == null ? void 0 : array_like_or_iterator.length) !== void 0 ? array_like_or_iterator : Array.from(array_like_or_iterator);
 }
 function create_component(block) {
   block && block.c();
@@ -357,7 +395,7 @@ class SvelteComponent {
 const PUBLIC_VERSION = "4";
 if (typeof window !== "undefined")
   (window.__svelte || (window.__svelte = { v: /* @__PURE__ */ new Set() })).v.add(PUBLIC_VERSION);
-function create_fragment$2(ctx) {
+function create_fragment$3(ctx) {
   let nav;
   let ul0;
   let li0;
@@ -409,11 +447,11 @@ const click_handler = () => {
 class Header extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, null, create_fragment$2, safe_not_equal, {});
+    init(this, options, null, create_fragment$3, safe_not_equal, {});
   }
 }
 const Footer_svelte_svelte_type_style_lang = "";
-function create_fragment$1(ctx) {
+function create_fragment$2(ctx) {
   let footer;
   return {
     c() {
@@ -441,7 +479,217 @@ function create_fragment$1(ctx) {
 class Footer extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, null, create_fragment$1, safe_not_equal, {});
+    init(this, options, null, create_fragment$2, safe_not_equal, {});
+  }
+}
+function get_each_context(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[4] = list[i];
+  return child_ctx;
+}
+function create_each_block(ctx) {
+  let li;
+  let t0_value = (
+    /*player*/
+    ctx[4].name + ""
+  );
+  let t0;
+  let t1;
+  let t2_value = (
+    /*player*/
+    ctx[4].peerId + ""
+  );
+  let t2;
+  return {
+    c() {
+      li = element("li");
+      t0 = text(t0_value);
+      t1 = text(" - ");
+      t2 = text(t2_value);
+    },
+    m(target, anchor) {
+      insert(target, li, anchor);
+      append(li, t0);
+      append(li, t1);
+      append(li, t2);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*allPlayers*/
+      1 && t0_value !== (t0_value = /*player*/
+      ctx2[4].name + ""))
+        set_data(t0, t0_value);
+      if (dirty & /*allPlayers*/
+      1 && t2_value !== (t2_value = /*player*/
+      ctx2[4].peerId + ""))
+        set_data(t2, t2_value);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(li);
+      }
+    }
+  };
+}
+function create_fragment$1(ctx) {
+  let article;
+  let h1;
+  let t1;
+  let h20;
+  let t3;
+  let ul;
+  let t4;
+  let h21;
+  let t6;
+  let label;
+  let input;
+  let t7;
+  let button;
+  let t8;
+  let mounted;
+  let dispose;
+  let each_value = ensure_array_like(
+    /*allPlayers*/
+    ctx[0]
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
+  }
+  return {
+    c() {
+      article = element("article");
+      h1 = element("h1");
+      h1.textContent = "Minigame";
+      t1 = space();
+      h20 = element("h2");
+      h20.textContent = "List of players";
+      t3 = space();
+      ul = element("ul");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      t4 = space();
+      h21 = element("h2");
+      h21.textContent = "Link";
+      t6 = space();
+      label = element("label");
+      input = element("input");
+      t7 = space();
+      button = element("button");
+      t8 = text(
+        /*copyButtonText*/
+        ctx[1]
+      );
+      attr(input, "type", "text");
+      attr(input, "id", "roomLink");
+      input.readOnly = true;
+    },
+    m(target, anchor) {
+      insert(target, article, anchor);
+      append(article, h1);
+      append(article, t1);
+      append(article, h20);
+      append(article, t3);
+      append(article, ul);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(ul, null);
+        }
+      }
+      append(article, t4);
+      append(article, h21);
+      append(article, t6);
+      append(article, label);
+      append(label, input);
+      append(label, t7);
+      append(label, button);
+      append(button, t8);
+      if (!mounted) {
+        dispose = listen(
+          button,
+          "click",
+          /*copyRoomLinkToClipboard*/
+          ctx[2]
+        );
+        mounted = true;
+      }
+    },
+    p(ctx2, [dirty]) {
+      if (dirty & /*allPlayers*/
+      1) {
+        each_value = ensure_array_like(
+          /*allPlayers*/
+          ctx2[0]
+        );
+        let i;
+        for (i = 0; i < each_value.length; i += 1) {
+          const child_ctx = get_each_context(ctx2, each_value, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(ul, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value.length;
+      }
+      if (dirty & /*copyButtonText*/
+      2)
+        set_data(
+          t8,
+          /*copyButtonText*/
+          ctx2[1]
+        );
+    },
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(article);
+      }
+      destroy_each(each_blocks, detaching);
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function instance$1($$self, $$props, $$invalidate) {
+  let { peer } = $$props;
+  let allPlayers = peer.allPlayers;
+  let copyButtonText = "Copy";
+  peer.onNewPlayer((player) => {
+    $$invalidate(0, allPlayers = peer.allPlayers);
+  });
+  onMount(() => {
+    let baseURI = location.protocol + "//" + location.host;
+    let roomLink = document.getElementById("roomLink");
+    roomLink.value = baseURI + "/minigames/?" + peer.getRoomId();
+  });
+  function copyRoomLinkToClipboard() {
+    let roomLink = document.getElementById("roomLink");
+    navigator.clipboard.writeText(roomLink.value);
+    $$invalidate(1, copyButtonText = "Copied!");
+    setTimeout(
+      () => {
+        $$invalidate(1, copyButtonText = "Copy");
+      },
+      2e3
+    );
+  }
+  $$self.$$set = ($$props2) => {
+    if ("peer" in $$props2)
+      $$invalidate(3, peer = $$props2.peer);
+  };
+  return [allPlayers, copyButtonText, copyRoomLinkToClipboard, peer];
+}
+class PuzzleWrapper extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$1, create_fragment$1, safe_not_equal, { peer: 3 });
   }
 }
 function getDefaultExportFromCjs(x) {
@@ -7982,203 +8230,498 @@ var $26088d7da5b03f69$export$ecd1fc136c422448 = (
   }($ac9b757d51178e15$exports.EventEmitter)
 );
 $26088d7da5b03f69$exports.Peer;
+class Player {
+  constructor(name) {
+    __publicField(this, "peerId", null);
+    __publicField(this, "name");
+    this.name = name;
+  }
+}
 class Host {
-  constructor(onConnect, onData, onDisconnect) {
+  constructor(player) {
+    __publicField(this, "player");
+    __publicField(this, "allPlayers", []);
     __publicField(this, "peer");
-    __publicField(this, "connection", null);
-    __publicField(this, "onConnect");
-    __publicField(this, "onData");
-    __publicField(this, "onDisconnect");
-    this.onConnect = onConnect;
-    this.onData = onData;
-    this.onDisconnect = onDisconnect;
+    __publicField(this, "connections", /* @__PURE__ */ new Set());
+    __publicField(this, "initPromise");
+    __publicField(this, "newPlayerCallback", null);
+    __publicField(this, "playerLeftCallback", null);
+    this.player = player;
+    this.allPlayers.push(player);
     this.peer = new $26088d7da5b03f69$export$ecd1fc136c422448({ debug: 2 });
-    this.peer.on("open", function(id) {
-      console.log("Hosting ID is: " + id);
-      console.log("Awaiting connection...");
+    this.initPromise = new Promise((resolve, reject) => {
+      this.peer.on("open", (id) => {
+        this.player.peerId = this.peer.id;
+        console.log("peer:open> " + this.peer.id);
+        resolve();
+      });
+      this.peer.on("connection", (connection) => {
+        console.log("peer:connection> " + connection.peer);
+        this.connections.add(connection);
+        connection.on("open", () => {
+          connection.send({
+            type: "newPlayers",
+            players: this.allPlayers
+          });
+        });
+        connection.on("data", (data) => {
+          console.log("connection:data> " + data);
+          this.interceptMessage(data);
+          this.connections.forEach((otherConnection) => {
+            if (otherConnection !== connection) {
+              otherConnection.send(data);
+            }
+          });
+        });
+        connection.on("close", () => {
+          console.log("connection:close");
+          this.connections.delete(connection);
+          reject();
+        });
+        connection.on("error", (error) => {
+          console.error("connection:error> " + error);
+          this.connections.delete(connection);
+          reject();
+        });
+      });
+      this.peer.on("disconnected", () => {
+        console.error("peer:disconnected");
+        reject();
+      });
+      this.peer.on("close", () => {
+        console.error("peer:close");
+        reject();
+      });
+      this.peer.on("error", (error) => {
+        console.error("peer:error> " + error);
+        reject();
+      });
     });
-    this.peer.on("connection", (connection) => {
-      console.log("Connection established!");
-      this.connection = connection;
+  }
+  onNewPlayer(callback) {
+    this.newPlayerCallback = callback;
+  }
+  onPlayerLeft(callback) {
+    this.playerLeftCallback = callback;
+  }
+  send(data) {
+    this.connections.forEach((connection) => {
+      connection.send(data);
     });
-    this.peer.on("disconnected", () => {
-      console.log("Disconnected!");
-    });
-    this.peer.on("close", () => {
-      console.log("Connection closed!");
-    });
-    this.peer.on("error", (err) => {
-      console.log(err);
-    });
+  }
+  async init() {
+    await this.initPromise;
+  }
+  getRoomId() {
+    return this.peer.id;
+  }
+  interceptMessage(data) {
+    if (data.type === "newPlayers") {
+      data.players.forEach((player) => {
+        var _a;
+        this.allPlayers.push(player);
+        (_a = this.newPlayerCallback) == null ? void 0 : _a.call(this, player);
+      });
+    }
   }
 }
 class Client {
-  constructor(hostId, onConnect, onData, onDisconnect) {
+  constructor(roomId, player) {
+    __publicField(this, "player");
+    __publicField(this, "allPlayers", []);
     __publicField(this, "peer");
     __publicField(this, "connection", null);
-    __publicField(this, "onConnect");
-    __publicField(this, "onData");
-    __publicField(this, "onDisconnect");
-    this.onConnect = onConnect;
-    this.onData = onData;
-    this.onDisconnect = onDisconnect;
+    __publicField(this, "initPromise");
+    __publicField(this, "roomId");
+    __publicField(this, "newPlayerCallback", null);
+    __publicField(this, "playerLeftCallback", null);
+    this.player = player;
+    this.allPlayers.push(player);
+    this.roomId = roomId;
     this.peer = new $26088d7da5b03f69$export$ecd1fc136c422448({ debug: 2 });
-    this.peer.on("open", function(id) {
-      console.log("Opened ID is: " + id);
-    });
-    this.peer.on("connection", function(connection2) {
-      connection2.on("open", function() {
-        connection2.send("Sender does not accept incoming connections");
-        setTimeout(function() {
-          connection2.close();
-        }, 500);
+    this.initPromise = new Promise((resolve, reject) => {
+      this.peer.on("open", () => {
+        this.player.peerId = this.peer.id;
+        console.log("peer:open> " + this.peer.id);
+        this.connection = this.peer.connect(roomId, { reliable: true });
+        this.connection.on("open", () => {
+          console.log("connection:open> " + this.connection.peer);
+          this.connection.send({
+            type: "newPlayers",
+            players: [this.player]
+          });
+          resolve();
+        });
+        this.connection.on("data", (data) => {
+          this.interceptMessage(data);
+          console.log("connection:data> " + data);
+        });
+        this.connection.on("close", () => {
+          console.log("connection:close");
+          reject();
+        });
+        this.connection.on("error", (error) => {
+          console.error("connection:error> " + error);
+          reject();
+        });
+      });
+      this.peer.on("disconnected", () => {
+        console.error("peer:disconnected");
+        reject();
+      });
+      this.peer.on("close", () => {
+        console.error("peer:close");
+        reject();
+      });
+      this.peer.on("error", (error) => {
+        console.error("peer:error> " + error);
+        reject();
       });
     });
-    this.peer.on("disconnected", function() {
-      console.log("Connection lost. Please reconnect");
-    });
-    this.peer.on("close", function() {
-      console.log("Connection destroyed");
-    });
-    this.peer.on("error", function(err) {
-      console.log(err);
-    });
-    let connection = this.peer.connect(hostId, { reliable: true });
-    connection.on("open", function() {
-      console.log("Connected to: " + connection.peer);
-    });
-    connection.on("data", function(data) {
-      console.log("Data received:" + data);
-    });
-    connection.on("close", function() {
-      console.log("Connection closed");
-    });
+  }
+  onNewPlayer(callback) {
+    this.newPlayerCallback = callback;
+  }
+  onPlayerLeft(callback) {
+    this.playerLeftCallback = callback;
+  }
+  send(data) {
+    if (!this.connection) {
+      throw new Error("Connection not established");
+    }
+    this.connection.send(data);
+  }
+  async init() {
+    await this.initPromise;
+  }
+  getRoomId() {
+    return this.roomId;
+  }
+  interceptMessage(data) {
+    if (data.type === "newPlayers") {
+      data.players.forEach((player) => {
+        var _a;
+        this.allPlayers.push(player);
+        (_a = this.newPlayerCallback) == null ? void 0 : _a.call(this, player);
+      });
+    }
   }
 }
+function isValidUUID(uuid) {
+  let uuidRegex = /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
+  return uuidRegex.test(uuid);
+}
 const App_svelte_svelte_type_style_lang = "";
+function create_else_block(ctx) {
+  let article;
+  let div0;
+  let h1;
+  let t1;
+  let form;
+  let input;
+  let t2;
+  let t3;
+  let div1;
+  let mounted;
+  let dispose;
+  function select_block_type_1(ctx2, dirty) {
+    if (
+      /*roomIdentifier*/
+      ctx2[3]
+    )
+      return create_if_block_2;
+    return create_else_block_1;
+  }
+  let current_block_type = select_block_type_1(ctx);
+  let if_block = current_block_type(ctx);
+  return {
+    c() {
+      article = element("article");
+      div0 = element("div");
+      h1 = element("h1");
+      h1.textContent = "Welcome!";
+      t1 = space();
+      form = element("form");
+      input = element("input");
+      t2 = space();
+      if_block.c();
+      t3 = space();
+      div1 = element("div");
+      attr(h1, "class", "svelte-nkxx9r");
+      attr(input, "type", "text");
+      attr(input, "placeholder", "Your name");
+      attr(input, "aria-label", "Your name");
+      attr(input, "autocomplete", "off");
+      attr(div0, "class", "svelte-nkxx9r");
+      attr(div1, "class", "svelte-nkxx9r");
+      attr(article, "class", "grid svelte-nkxx9r");
+    },
+    m(target, anchor) {
+      insert(target, article, anchor);
+      append(article, div0);
+      append(div0, h1);
+      append(div0, t1);
+      append(div0, form);
+      append(form, input);
+      set_input_value(
+        input,
+        /*name*/
+        ctx[2]
+      );
+      append(form, t2);
+      if_block.m(form, null);
+      append(article, t3);
+      append(article, div1);
+      if (!mounted) {
+        dispose = listen(
+          input,
+          "input",
+          /*input_input_handler*/
+          ctx[6]
+        );
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*name*/
+      4 && input.value !== /*name*/
+      ctx2[2]) {
+        set_input_value(
+          input,
+          /*name*/
+          ctx2[2]
+        );
+      }
+      if_block.p(ctx2, dirty);
+    },
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(article);
+      }
+      if_block.d();
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_if_block_1(ctx) {
+  let puzzlewrapper;
+  let current;
+  puzzlewrapper = new PuzzleWrapper({ props: { peer: (
+    /*client*/
+    ctx[1]
+  ) } });
+  return {
+    c() {
+      create_component(puzzlewrapper.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(puzzlewrapper, target, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      const puzzlewrapper_changes = {};
+      if (dirty & /*client*/
+      2)
+        puzzlewrapper_changes.peer = /*client*/
+        ctx2[1];
+      puzzlewrapper.$set(puzzlewrapper_changes);
+    },
+    i(local) {
+      if (current)
+        return;
+      transition_in(puzzlewrapper.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(puzzlewrapper.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(puzzlewrapper, detaching);
+    }
+  };
+}
+function create_if_block(ctx) {
+  let puzzlewrapper;
+  let current;
+  puzzlewrapper = new PuzzleWrapper({ props: { peer: (
+    /*host*/
+    ctx[0]
+  ) } });
+  return {
+    c() {
+      create_component(puzzlewrapper.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(puzzlewrapper, target, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      const puzzlewrapper_changes = {};
+      if (dirty & /*host*/
+      1)
+        puzzlewrapper_changes.peer = /*host*/
+        ctx2[0];
+      puzzlewrapper.$set(puzzlewrapper_changes);
+    },
+    i(local) {
+      if (current)
+        return;
+      transition_in(puzzlewrapper.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(puzzlewrapper.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(puzzlewrapper, detaching);
+    }
+  };
+}
+function create_else_block_1(ctx) {
+  let button;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      button = element("button");
+      button.textContent = "Create a private room!";
+      attr(button, "type", "submit");
+    },
+    m(target, anchor) {
+      insert(target, button, anchor);
+      if (!mounted) {
+        dispose = listen(button, "click", prevent_default(
+          /*createRoom*/
+          ctx[4]
+        ));
+        mounted = true;
+      }
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(button);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_if_block_2(ctx) {
+  let button;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      button = element("button");
+      button.textContent = "Join room!";
+      attr(button, "type", "submit");
+    },
+    m(target, anchor) {
+      insert(target, button, anchor);
+      if (!mounted) {
+        dispose = listen(button, "click", prevent_default(
+          /*joinRoom*/
+          ctx[5]
+        ));
+        mounted = true;
+      }
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(button);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
 function create_fragment(ctx) {
   let header;
   let t0;
   let main;
-  let article;
-  let div0;
-  let h1;
-  let t2;
-  let form;
-  let input;
-  let t3;
-  let button0;
-  let t5;
-  let button1;
-  let t7;
-  let div1;
-  let t8;
+  let current_block_type_index;
+  let if_block;
+  let t1;
   let footer;
   let current;
-  let mounted;
-  let dispose;
   header = new Header({});
+  const if_block_creators = [create_if_block, create_if_block_1, create_else_block];
+  const if_blocks = [];
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*host*/
+      ctx2[0]
+    )
+      return 0;
+    if (
+      /*client*/
+      ctx2[1]
+    )
+      return 1;
+    return 2;
+  }
+  current_block_type_index = select_block_type(ctx);
+  if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
   footer = new Footer({});
   return {
     c() {
       create_component(header.$$.fragment);
       t0 = space();
       main = element("main");
-      article = element("article");
-      div0 = element("div");
-      h1 = element("h1");
-      h1.textContent = "Welcome!";
-      t2 = space();
-      form = element("form");
-      input = element("input");
-      t3 = space();
-      button0 = element("button");
-      button0.textContent = "Play!";
-      t5 = space();
-      button1 = element("button");
-      button1.textContent = "Create a private room";
-      t7 = space();
-      div1 = element("div");
-      t8 = space();
+      if_block.c();
+      t1 = space();
       create_component(footer.$$.fragment);
-      attr(h1, "class", "svelte-nkxx9r");
-      attr(input, "type", "text");
-      attr(input, "name", "nickname");
-      attr(input, "placeholder", "Your nickname");
-      attr(input, "aria-label", "Your nickname");
-      attr(input, "autocomplete", "nickname");
-      attr(button0, "type", "submit");
-      attr(button1, "type", "submit");
-      attr(button1, "class", "contrast");
-      attr(div0, "class", "svelte-nkxx9r");
-      attr(div1, "class", "svelte-nkxx9r");
-      attr(article, "class", "grid svelte-nkxx9r");
       attr(main, "class", "container svelte-nkxx9r");
     },
     m(target, anchor) {
       mount_component(header, target, anchor);
       insert(target, t0, anchor);
       insert(target, main, anchor);
-      append(main, article);
-      append(article, div0);
-      append(div0, h1);
-      append(div0, t2);
-      append(div0, form);
-      append(form, input);
-      set_input_value(
-        input,
-        /*name*/
-        ctx[0]
-      );
-      append(form, t3);
-      append(form, button0);
-      append(form, t5);
-      append(form, button1);
-      append(article, t7);
-      append(article, div1);
-      insert(target, t8, anchor);
+      if_blocks[current_block_type_index].m(main, null);
+      insert(target, t1, anchor);
       mount_component(footer, target, anchor);
       current = true;
-      if (!mounted) {
-        dispose = [
-          listen(
-            input,
-            "input",
-            /*input_input_handler*/
-            ctx[3]
-          ),
-          listen(button0, "click", prevent_default(
-            /*joinRoom*/
-            ctx[2]
-          )),
-          listen(button1, "click", prevent_default(
-            /*createRoom*/
-            ctx[1]
-          ))
-        ];
-        mounted = true;
-      }
     },
     p(ctx2, [dirty]) {
-      if (dirty & /*name*/
-      1 && input.value !== /*name*/
-      ctx2[0]) {
-        set_input_value(
-          input,
-          /*name*/
-          ctx2[0]
-        );
+      let previous_block_index = current_block_type_index;
+      current_block_type_index = select_block_type(ctx2);
+      if (current_block_type_index === previous_block_index) {
+        if_blocks[current_block_type_index].p(ctx2, dirty);
+      } else {
+        group_outros();
+        transition_out(if_blocks[previous_block_index], 1, 1, () => {
+          if_blocks[previous_block_index] = null;
+        });
+        check_outros();
+        if_block = if_blocks[current_block_type_index];
+        if (!if_block) {
+          if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx2);
+          if_block.c();
+        } else {
+          if_block.p(ctx2, dirty);
+        }
+        transition_in(if_block, 1);
+        if_block.m(main, null);
       }
     },
     i(local) {
       if (current)
         return;
       transition_in(header.$$.fragment, local);
+      transition_in(if_block);
       transition_in(footer.$$.fragment, local);
       current = true;
     },
     o(local) {
       transition_out(header.$$.fragment, local);
+      transition_out(if_block);
       transition_out(footer.$$.fragment, local);
       current = false;
     },
@@ -8186,43 +8729,39 @@ function create_fragment(ctx) {
       if (detaching) {
         detach(t0);
         detach(main);
-        detach(t8);
+        detach(t1);
       }
       destroy_component(header, detaching);
+      if_blocks[current_block_type_index].d();
       destroy_component(footer, detaching);
-      mounted = false;
-      run_all(dispose);
     }
   };
 }
 function instance($$self, $$props, $$invalidate) {
-  let name = "";
-  function createRoom() {
-    new Host(
-      (data) => {
-      },
-      (data) => {
-      },
-      () => {
-      }
-    );
+  let host = null;
+  let client = null;
+  function getRoomIdentifier() {
+    let queryString = window.location.search.substring(1);
+    return isValidUUID(queryString) ? queryString : null;
   }
-  function joinRoom() {
-    new Client(
-      name,
-      (data) => {
-      },
-      (data) => {
-      },
-      () => {
-      }
-    );
+  let roomIdentifier = getRoomIdentifier();
+  let name = "";
+  async function createRoom() {
+    let uninitializedHost = new Host(new Player(name));
+    await uninitializedHost.init();
+    $$invalidate(0, host = uninitializedHost);
+  }
+  async function joinRoom() {
+    window.history.replaceState({}, document.title, "/minigames/");
+    let uninitializedClient = new Client(roomIdentifier, new Player(name));
+    await uninitializedClient.init();
+    $$invalidate(1, client = uninitializedClient);
   }
   function input_input_handler() {
     name = this.value;
-    $$invalidate(0, name);
+    $$invalidate(2, name);
   }
-  return [name, createRoom, joinRoom, input_input_handler];
+  return [host, client, name, roomIdentifier, createRoom, joinRoom, input_input_handler];
 }
 class App extends SvelteComponent {
   constructor(options) {

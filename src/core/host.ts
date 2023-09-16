@@ -1,55 +1,113 @@
 import { Peer } from 'peerjs';
 import type { DataConnection } from 'peerjs';
 
-/**
- * The Host class is responsible for managing the connection to the host.
- * It creates a receiver Peer and offers events to listen to for when a client
- * connects, sends data and disconnects.
- */
-export class Host {
-    private peer: Peer;
-    private connection: DataConnection | null = null;
-    private onConnect: (data: string) => void;
-    private onData: (data: string) => void;
-    private onDisconnect: () => void;
+import type { Peer as PeerInterface } from './peer';
+import { Player } from "../gaming/player";
 
-    constructor(
-        onConnect: (data: string) => void,
-        onData: (data: string) => void,
-        onDisconnect: () => void,
-    ) {
-        this.onConnect = onConnect;
-        this.onData = onData;
-        this.onDisconnect = onDisconnect;
+export class Host implements PeerInterface {
+    player: Player;
+    allPlayers: Player[] = [];
+
+    private peer: Peer;
+    private connections: Set<DataConnection> = new Set();
+    private initPromise: Promise<void>;
+
+    private newPlayerCallback: ((player: Player) => void) | null = null;
+    private playerLeftCallback: ((player: Player) => void) | null = null;
+
+    onNewPlayer(callback: (player: Player) => void) {
+        this.newPlayerCallback = callback;
+    }
+
+    onPlayerLeft(callback: (player: Player) => void) {
+        this.playerLeftCallback = callback;
+    }
+
+    constructor(player: Player) {
+        this.player = player;
+        this.allPlayers.push(player);
 
         this.peer = new Peer({ debug: 2 });
 
-        this.peer.on("open", function (id) {
-            console.log("Hosting ID is: " + id);
-            console.log("Awaiting connection...");
-        });
-
-        this.peer.on("connection", (connection) => {
-            console.log("Connection established!");
-            this.connection = connection;
-            /*this.connection.on("data", this.onData);
-            this.connection.on("close", () => {
-                console.log("Connection closed!");
-                this.onDisconnect();
+        this.initPromise = new Promise((resolve, reject) => {
+            this.peer.on("open", (id) => {
+                this.player.peerId = this.peer.id;
+                console.log("peer:open> " + this.peer.id);
+                resolve();
             });
-            this.onConnect(connection.peer);*/
-        });
 
-        this.peer.on("disconnected", () => {
-            console.log("Disconnected!");
-        });
+            this.peer.on("connection", (connection) => {
+                console.log("peer:connection> " + connection.peer);
 
-        this.peer.on("close", () => {
-            console.log("Connection closed!");
-        });
+                this.connections.add(connection);
 
-        this.peer.on("error", (err) => {
-            console.log(err);
+                connection.on("open", () => {
+                    connection.send({
+                        type: "newPlayers",
+                        players: this.allPlayers
+                    });
+                });
+
+                connection.on("data", (data) => {
+                    console.log("connection:data> " + data);
+                    this.interceptMessage(data);
+                    this.connections.forEach((otherConnection) => {
+                        if (otherConnection !== connection) {
+                            otherConnection.send(data);
+                        }
+                    });
+                });
+
+                connection.on("close", () => {
+                    console.log("connection:close");
+                    this.connections.delete(connection);
+                    reject();
+                });
+
+                connection.on("error", (error) => {
+                    console.error("connection:error> " + error);
+                    this.connections.delete(connection);
+                    reject();
+                });
+            });
+
+            this.peer.on("disconnected", () => {
+                console.error("peer:disconnected");
+                reject();
+            });
+
+            this.peer.on("close", () => {
+                console.error("peer:close");
+                reject();
+            });
+
+            this.peer.on("error", (error) => {
+                console.error("peer:error> " + error);
+                reject();
+            });
         });
+    }
+
+    public send(data: any) {
+        this.connections.forEach((connection) => {
+            connection.send(data);
+        });
+    }
+
+    public async init() {
+        await this.initPromise;
+    }
+
+    public getRoomId() {
+        return this.peer.id;
+    }
+
+    private interceptMessage(data: any) {
+        if (data.type === "newPlayers") {
+            data.players.forEach((player: Player) => {
+                this.allPlayers.push(player);
+                this.newPlayerCallback?.(player);
+            });
+        }
     }
 }
