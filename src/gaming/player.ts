@@ -1,9 +1,14 @@
+import { generateRandomName } from "./names";
+
 export class Player {
     peerId: string | null = null;
     name: string;
 
     constructor(name: string) {
-        this.name = name;
+        if (name === "") {
+            this.name = generateRandomName();
+        } else {
+            this.name = name;
+        }
     }
-
 }
