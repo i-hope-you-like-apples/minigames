@@ -405,6 +405,19 @@ function create_fragment$4(ctx) {
   let a0;
   let t2;
   let ul2;
+  let li4;
+  let details;
+  let summary;
+  let t4;
+  let ul1;
+  let li1;
+  let a1;
+  let t6;
+  let li2;
+  let a2;
+  let t8;
+  let li3;
+  let a3;
   let mounted;
   let dispose;
   return {
@@ -416,9 +429,31 @@ function create_fragment$4(ctx) {
       a0.innerHTML = `<strong>Multiplayer Puzzle Collection by <i>IHopeYouLikeApples</i></strong>`;
       t2 = space();
       ul2 = element("ul");
-      ul2.innerHTML = `<li><details role="list" dir="rtl"><summary aria-haspopup="listbox" role="link" class="secondary">All Puzzles</summary> <ul role="listbox"><li><a href="/minigames/"><i>Lobby</i></a></li> <li><a href="/minigames/">Inertia</a></li> <li><a href="/minigames/">Tic Tac Two</a></li></ul></details></li>`;
+      li4 = element("li");
+      details = element("details");
+      summary = element("summary");
+      summary.textContent = "Theme";
+      t4 = space();
+      ul1 = element("ul");
+      li1 = element("li");
+      a1 = element("a");
+      a1.textContent = "Auto";
+      t6 = space();
+      li2 = element("li");
+      a2 = element("a");
+      a2.textContent = "Light";
+      t8 = space();
+      li3 = element("li");
+      a3 = element("a");
+      a3.textContent = "Dark";
       attr(a0, "href", "./");
       attr(a0, "class", "contrast");
+      attr(summary, "aria-haspopup", "listbox");
+      attr(summary, "role", "link");
+      attr(summary, "class", "secondary");
+      attr(ul1, "role", "listbox");
+      attr(details, "role", "list");
+      attr(details, "dir", "rtl");
       attr(nav, "class", "container-fluid");
     },
     m(target, anchor) {
@@ -428,8 +463,41 @@ function create_fragment$4(ctx) {
       append(li0, a0);
       append(nav, t2);
       append(nav, ul2);
+      append(ul2, li4);
+      append(li4, details);
+      append(details, summary);
+      append(details, t4);
+      append(details, ul1);
+      append(ul1, li1);
+      append(li1, a1);
+      append(ul1, t6);
+      append(ul1, li2);
+      append(li2, a2);
+      append(ul1, t8);
+      append(ul1, li3);
+      append(li3, a3);
       if (!mounted) {
-        dispose = listen(a0, "click", prevent_default(click_handler));
+        dispose = [
+          listen(a0, "click", prevent_default(click_handler)),
+          listen(
+            a1,
+            "click",
+            /*click_handler_1*/
+            ctx[1]
+          ),
+          listen(
+            a2,
+            "click",
+            /*click_handler_2*/
+            ctx[2]
+          ),
+          listen(
+            a3,
+            "click",
+            /*click_handler_3*/
+            ctx[3]
+          )
+        ];
         mounted = true;
       }
     },
@@ -441,16 +509,51 @@ function create_fragment$4(ctx) {
         detach(nav);
       }
       mounted = false;
-      dispose();
+      run_all(dispose);
     }
   };
 }
 const click_handler = () => {
 };
+function instance$3($$self) {
+  let scheme = "auto";
+  onMount(() => {
+    if (typeof window.localStorage !== "undefined") {
+      let newScheme = window.localStorage.getItem("preferredColorScheme");
+      if (newScheme !== null) {
+        scheme = newScheme;
+        applyScheme();
+      }
+    }
+  });
+  function applyScheme() {
+    var _a;
+    let finalScheme = scheme;
+    if (finalScheme === "auto") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        finalScheme = "dark";
+      } else {
+        finalScheme = "light";
+      }
+    }
+    (_a = document.querySelector("html")) == null ? void 0 : _a.setAttribute("data-theme", finalScheme);
+  }
+  function switchTheme(newScheme) {
+    scheme = newScheme;
+    applyScheme();
+    if (typeof window.localStorage !== "undefined") {
+      window.localStorage.setItem("preferredColorScheme", scheme);
+    }
+  }
+  const click_handler_1 = () => switchTheme("auto");
+  const click_handler_2 = () => switchTheme("light");
+  const click_handler_3 = () => switchTheme("dark");
+  return [switchTheme, click_handler_1, click_handler_2, click_handler_3];
+}
 class Header extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, null, create_fragment$4, safe_not_equal, {});
+    init(this, options, instance$3, create_fragment$4, safe_not_equal, {});
   }
 }
 const Footer_svelte_svelte_type_style_lang = "";
