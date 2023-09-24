@@ -2,7 +2,7 @@ import { Peer } from 'peerjs';
 import type { DataConnection } from 'peerjs';
 
 import type { Peer as PeerInterface } from './peer';
-import { Player } from "../gaming/player";
+import { Player } from "./player";
 
 export class Client implements PeerInterface {
     player: Player;

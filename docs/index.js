@@ -9122,10 +9122,6 @@ class Client {
     }
   }
 }
-function isValidUUID(uuid) {
-  let uuidRegex = /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
-  return uuidRegex.test(uuid);
-}
 const App_svelte_svelte_type_style_lang = "";
 function create_else_block(ctx) {
   let article;
@@ -9452,13 +9448,14 @@ function create_fragment(ctx) {
     }
   };
 }
+function getRoomIdentifier() {
+  let queryString = window.location.search.substring(1);
+  let uuidRegex = /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
+  return uuidRegex.test(queryString) ? queryString : null;
+}
 function instance($$self, $$props, $$invalidate) {
   let host = null;
   let client = null;
-  function getRoomIdentifier() {
-    let queryString = window.location.search.substring(1);
-    return isValidUUID(queryString) ? queryString : null;
-  }
   let roomIdentifier = getRoomIdentifier();
   let name = "";
   async function createRoom() {

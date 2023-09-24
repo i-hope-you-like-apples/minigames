@@ -5,15 +5,16 @@
 
   import { Host } from "./core/host";
   import { Client } from "./core/client";
-  import { isValidUUID } from "./utils";
-  import { Player } from "./gaming/player";
+  import { Player } from "./core/player";
 
   let host: Host | null = null;
   let client: Client | null = null;
 
   function getRoomIdentifier() {
     let queryString = window.location.search.substring(1);
-    return isValidUUID(queryString) ? queryString : null;
+    let uuidRegex =
+      /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
+    return uuidRegex.test(queryString) ? queryString : null;
   }
 
   let roomIdentifier = getRoomIdentifier();

@@ -1,4 +1,4 @@
-import { Player } from "../gaming/player";
+import { Player } from "./player";
 
 export interface Peer {
     player: Player;
