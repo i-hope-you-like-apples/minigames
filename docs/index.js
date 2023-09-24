@@ -91,6 +91,9 @@ function text(data) {
 function space() {
   return text(" ");
 }
+function empty() {
+  return text("");
+}
 function listen(node, event, handler, options) {
   node.addEventListener(event, handler, options);
   return () => node.removeEventListener(event, handler, options);
@@ -395,7 +398,7 @@ class SvelteComponent {
 const PUBLIC_VERSION = "4";
 if (typeof window !== "undefined")
   (window.__svelte || (window.__svelte = { v: /* @__PURE__ */ new Set() })).v.add(PUBLIC_VERSION);
-function create_fragment$3(ctx) {
+function create_fragment$4(ctx) {
   let nav;
   let ul0;
   let li0;
@@ -447,11 +450,11 @@ const click_handler = () => {
 class Header extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, null, create_fragment$3, safe_not_equal, {});
+    init(this, options, null, create_fragment$4, safe_not_equal, {});
   }
 }
 const Footer_svelte_svelte_type_style_lang = "";
-function create_fragment$2(ctx) {
+function create_fragment$3(ctx) {
   let footer;
   return {
     c() {
@@ -479,25 +482,136 @@ function create_fragment$2(ctx) {
 class Footer extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, null, create_fragment$2, safe_not_equal, {});
+    init(this, options, null, create_fragment$3, safe_not_equal, {});
+  }
+}
+function create_if_block$2(ctx) {
+  let button;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      button = element("button");
+      button.textContent = "Start game";
+    },
+    m(target, anchor) {
+      insert(target, button, anchor);
+      if (!mounted) {
+        dispose = listen(
+          button,
+          "click",
+          /*click_handler*/
+          ctx[1]
+        );
+        mounted = true;
+      }
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(button);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_fragment$2(ctx) {
+  let h2;
+  let t1;
+  let p;
+  let t3;
+  let if_block_anchor;
+  let if_block = (
+    /*peer*/
+    ctx[0].player.isHost && create_if_block$2(ctx)
+  );
+  return {
+    c() {
+      h2 = element("h2");
+      h2.textContent = "Selector";
+      t1 = space();
+      p = element("p");
+      p.textContent = "Coucou";
+      t3 = space();
+      if (if_block)
+        if_block.c();
+      if_block_anchor = empty();
+    },
+    m(target, anchor) {
+      insert(target, h2, anchor);
+      insert(target, t1, anchor);
+      insert(target, p, anchor);
+      insert(target, t3, anchor);
+      if (if_block)
+        if_block.m(target, anchor);
+      insert(target, if_block_anchor, anchor);
+    },
+    p(ctx2, [dirty]) {
+      if (
+        /*peer*/
+        ctx2[0].player.isHost
+      ) {
+        if (if_block) {
+          if_block.p(ctx2, dirty);
+        } else {
+          if_block = create_if_block$2(ctx2);
+          if_block.c();
+          if_block.m(if_block_anchor.parentNode, if_block_anchor);
+        }
+      } else if (if_block) {
+        if_block.d(1);
+        if_block = null;
+      }
+    },
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(h2);
+        detach(t1);
+        detach(p);
+        detach(t3);
+        detach(if_block_anchor);
+      }
+      if (if_block)
+        if_block.d(detaching);
+    }
+  };
+}
+function instance$2($$self, $$props, $$invalidate) {
+  let { peer } = $$props;
+  const click_handler2 = () => {
+    peer.changePuzzleMode("game");
+  };
+  $$self.$$set = ($$props2) => {
+    if ("peer" in $$props2)
+      $$invalidate(0, peer = $$props2.peer);
+  };
+  return [peer, click_handler2];
+}
+class Selector extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$2, create_fragment$2, safe_not_equal, { peer: 0 });
   }
 }
 function get_each_context(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[4] = list[i];
+  child_ctx[5] = list[i];
   return child_ctx;
 }
 function create_each_block(ctx) {
   let li;
   let t0_value = (
     /*player*/
-    ctx[4].name + ""
+    ctx[5].name + ""
   );
   let t0;
   let t1;
   let t2_value = (
     /*player*/
-    ctx[4].peerId + ""
+    ctx[5].peerId + ""
   );
   let t2;
   return {
@@ -515,12 +629,12 @@ function create_each_block(ctx) {
     },
     p(ctx2, dirty) {
       if (dirty & /*allPlayers*/
-      1 && t0_value !== (t0_value = /*player*/
-      ctx2[4].name + ""))
+      4 && t0_value !== (t0_value = /*player*/
+      ctx2[5].name + ""))
         set_data(t0, t0_value);
       if (dirty & /*allPlayers*/
-      1 && t2_value !== (t2_value = /*player*/
-      ctx2[4].peerId + ""))
+      4 && t2_value !== (t2_value = /*player*/
+      ctx2[5].peerId + ""))
         set_data(t2, t2_value);
     },
     d(detaching) {
@@ -530,8 +644,66 @@ function create_each_block(ctx) {
     }
   };
 }
+function create_if_block_1$1(ctx) {
+  let p;
+  return {
+    c() {
+      p = element("p");
+      p.textContent = "Game";
+    },
+    m(target, anchor) {
+      insert(target, p, anchor);
+    },
+    p: noop,
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(p);
+      }
+    }
+  };
+}
+function create_if_block$1(ctx) {
+  let selector;
+  let current;
+  selector = new Selector({ props: { peer: (
+    /*peer*/
+    ctx[0]
+  ) } });
+  return {
+    c() {
+      create_component(selector.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(selector, target, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      const selector_changes = {};
+      if (dirty & /*peer*/
+      1)
+        selector_changes.peer = /*peer*/
+        ctx2[0];
+      selector.$set(selector_changes);
+    },
+    i(local) {
+      if (current)
+        return;
+      transition_in(selector.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(selector.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(selector, detaching);
+    }
+  };
+}
 function create_fragment$1(ctx) {
-  let article;
+  let article0;
   let h1;
   let t1;
   let h20;
@@ -545,19 +717,42 @@ function create_fragment$1(ctx) {
   let t7;
   let button;
   let t8;
+  let t9;
+  let article1;
+  let current_block_type_index;
+  let if_block;
+  let current;
   let mounted;
   let dispose;
   let each_value = ensure_array_like(
     /*allPlayers*/
-    ctx[0]
+    ctx[2]
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
     each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
   }
+  const if_block_creators = [create_if_block$1, create_if_block_1$1];
+  const if_blocks = [];
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*currentMode*/
+      ctx2[1] === "selector"
+    )
+      return 0;
+    if (
+      /*currentMode*/
+      ctx2[1] === "game"
+    )
+      return 1;
+    return -1;
+  }
+  if (~(current_block_type_index = select_block_type(ctx))) {
+    if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
+  }
   return {
     c() {
-      article = element("article");
+      article0 = element("article");
       h1 = element("h1");
       h1.textContent = "Minigame";
       t1 = space();
@@ -578,48 +773,58 @@ function create_fragment$1(ctx) {
       button = element("button");
       t8 = text(
         /*copyButtonText*/
-        ctx[1]
+        ctx[3]
       );
+      t9 = space();
+      article1 = element("article");
+      if (if_block)
+        if_block.c();
       attr(input, "type", "text");
       attr(input, "id", "roomLink");
       input.readOnly = true;
     },
     m(target, anchor) {
-      insert(target, article, anchor);
-      append(article, h1);
-      append(article, t1);
-      append(article, h20);
-      append(article, t3);
-      append(article, ul);
+      insert(target, article0, anchor);
+      append(article0, h1);
+      append(article0, t1);
+      append(article0, h20);
+      append(article0, t3);
+      append(article0, ul);
       for (let i = 0; i < each_blocks.length; i += 1) {
         if (each_blocks[i]) {
           each_blocks[i].m(ul, null);
         }
       }
-      append(article, t4);
-      append(article, h21);
-      append(article, t6);
-      append(article, label);
+      append(article0, t4);
+      append(article0, h21);
+      append(article0, t6);
+      append(article0, label);
       append(label, input);
       append(label, t7);
       append(label, button);
       append(button, t8);
+      insert(target, t9, anchor);
+      insert(target, article1, anchor);
+      if (~current_block_type_index) {
+        if_blocks[current_block_type_index].m(article1, null);
+      }
+      current = true;
       if (!mounted) {
         dispose = listen(
           button,
           "click",
           /*copyRoomLinkToClipboard*/
-          ctx[2]
+          ctx[4]
         );
         mounted = true;
       }
     },
     p(ctx2, [dirty]) {
       if (dirty & /*allPlayers*/
-      1) {
+      4) {
         each_value = ensure_array_like(
           /*allPlayers*/
-          ctx2[0]
+          ctx2[2]
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
@@ -637,21 +842,62 @@ function create_fragment$1(ctx) {
         }
         each_blocks.length = each_value.length;
       }
-      if (dirty & /*copyButtonText*/
-      2)
+      if (!current || dirty & /*copyButtonText*/
+      8)
         set_data(
           t8,
           /*copyButtonText*/
-          ctx2[1]
+          ctx2[3]
         );
+      let previous_block_index = current_block_type_index;
+      current_block_type_index = select_block_type(ctx2);
+      if (current_block_type_index === previous_block_index) {
+        if (~current_block_type_index) {
+          if_blocks[current_block_type_index].p(ctx2, dirty);
+        }
+      } else {
+        if (if_block) {
+          group_outros();
+          transition_out(if_blocks[previous_block_index], 1, 1, () => {
+            if_blocks[previous_block_index] = null;
+          });
+          check_outros();
+        }
+        if (~current_block_type_index) {
+          if_block = if_blocks[current_block_type_index];
+          if (!if_block) {
+            if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx2);
+            if_block.c();
+          } else {
+            if_block.p(ctx2, dirty);
+          }
+          transition_in(if_block, 1);
+          if_block.m(article1, null);
+        } else {
+          if_block = null;
+        }
+      }
     },
-    i: noop,
-    o: noop,
+    i(local) {
+      if (current)
+        return;
+      transition_in(if_block);
+      current = true;
+    },
+    o(local) {
+      transition_out(if_block);
+      current = false;
+    },
     d(detaching) {
       if (detaching) {
-        detach(article);
+        detach(article0);
+        detach(t9);
+        detach(article1);
       }
       destroy_each(each_blocks, detaching);
+      if (~current_block_type_index) {
+        if_blocks[current_block_type_index].d();
+      }
       mounted = false;
       dispose();
     }
@@ -659,10 +905,14 @@ function create_fragment$1(ctx) {
 }
 function instance$1($$self, $$props, $$invalidate) {
   let { peer } = $$props;
+  let currentMode = "selector";
   let allPlayers = peer.allPlayers;
   let copyButtonText = "Copy";
   peer.onNewPlayer((player) => {
-    $$invalidate(0, allPlayers = peer.allPlayers);
+    $$invalidate(2, allPlayers = peer.allPlayers);
+  });
+  peer.onPuzzleModeChanged((mode) => {
+    $$invalidate(1, currentMode = mode);
   });
   onMount(() => {
     let baseURI = location.protocol + "//" + location.host;
@@ -672,24 +922,24 @@ function instance$1($$self, $$props, $$invalidate) {
   function copyRoomLinkToClipboard() {
     let roomLink = document.getElementById("roomLink");
     navigator.clipboard.writeText(roomLink.value);
-    $$invalidate(1, copyButtonText = "Copied!");
+    $$invalidate(3, copyButtonText = "Copied!");
     setTimeout(
       () => {
-        $$invalidate(1, copyButtonText = "Copy");
+        $$invalidate(3, copyButtonText = "Copy");
       },
       2e3
     );
   }
   $$self.$$set = ($$props2) => {
     if ("peer" in $$props2)
-      $$invalidate(3, peer = $$props2.peer);
+      $$invalidate(0, peer = $$props2.peer);
   };
-  return [allPlayers, copyButtonText, copyRoomLinkToClipboard, peer];
+  return [peer, currentMode, allPlayers, copyButtonText, copyRoomLinkToClipboard];
 }
 class PuzzleWrapper extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$1, create_fragment$1, safe_not_equal, { peer: 3 });
+    init(this, options, instance$1, create_fragment$1, safe_not_equal, { peer: 0 });
   }
 }
 function getDefaultExportFromCjs(x) {
@@ -8565,6 +8815,7 @@ function generateRandomName() {
 class Player {
   constructor(name) {
     __publicField(this, "peerId", null);
+    __publicField(this, "isHost", false);
     __publicField(this, "name");
     if (name === "") {
       this.name = generateRandomName();
@@ -8582,7 +8833,9 @@ class Host {
     __publicField(this, "initPromise");
     __publicField(this, "newPlayerCallback", null);
     __publicField(this, "playerLeftCallback", null);
+    __publicField(this, "puzzleModeChangedCallback", null);
     this.player = player;
+    this.player.isHost = true;
     this.allPlayers.push(player);
     this.peer = new $26088d7da5b03f69$export$ecd1fc136c422448({ debug: 2 });
     this.initPromise = new Promise((resolve, reject) => {
@@ -8602,7 +8855,7 @@ class Host {
         });
         connection.on("data", (data) => {
           console.log("connection:data> " + data);
-          this.interceptMessage(data);
+          this.handleMessage(data);
           this.connections.forEach((otherConnection) => {
             if (otherConnection !== connection) {
               otherConnection.send(data);
@@ -8640,6 +8893,9 @@ class Host {
   onPlayerLeft(callback) {
     this.playerLeftCallback = callback;
   }
+  onPuzzleModeChanged(callback) {
+    this.puzzleModeChangedCallback = callback;
+  }
   send(data) {
     this.connections.forEach((connection) => {
       connection.send(data);
@@ -8651,13 +8907,23 @@ class Host {
   getRoomId() {
     return this.peer.id;
   }
-  interceptMessage(data) {
+  changePuzzleMode(mode) {
+    var _a;
+    this.send({
+      type: "puzzleModeChanged",
+      mode
+    });
+    (_a = this.puzzleModeChangedCallback) == null ? void 0 : _a.call(this, mode);
+  }
+  handleMessage(data) {
     if (data.type === "newPlayers") {
       data.players.forEach((player) => {
         var _a;
         this.allPlayers.push(player);
         (_a = this.newPlayerCallback) == null ? void 0 : _a.call(this, player);
       });
+    } else if (data.type === "puzzleModeChanged") {
+      throw new Error("Clients cannot change puzzle mode");
     }
   }
 }
@@ -8671,6 +8937,7 @@ class Client {
     __publicField(this, "roomId");
     __publicField(this, "newPlayerCallback", null);
     __publicField(this, "playerLeftCallback", null);
+    __publicField(this, "puzzleModeChangedCallback", null);
     this.player = player;
     this.allPlayers.push(player);
     this.roomId = roomId;
@@ -8689,7 +8956,7 @@ class Client {
           resolve();
         });
         this.connection.on("data", (data) => {
-          this.interceptMessage(data);
+          this.handleMessage(data);
           console.log("connection:data> " + data);
         });
         this.connection.on("close", () => {
@@ -8721,6 +8988,9 @@ class Client {
   onPlayerLeft(callback) {
     this.playerLeftCallback = callback;
   }
+  onPuzzleModeChanged(callback) {
+    this.puzzleModeChangedCallback = callback;
+  }
   send(data) {
     if (!this.connection) {
       throw new Error("Connection not established");
@@ -8733,13 +9003,19 @@ class Client {
   getRoomId() {
     return this.roomId;
   }
-  interceptMessage(data) {
+  changePuzzleMode(mode) {
+    throw new Error("Clients cannot change puzzle mode");
+  }
+  handleMessage(data) {
+    var _a;
     if (data.type === "newPlayers") {
       data.players.forEach((player) => {
-        var _a;
+        var _a2;
         this.allPlayers.push(player);
-        (_a = this.newPlayerCallback) == null ? void 0 : _a.call(this, player);
+        (_a2 = this.newPlayerCallback) == null ? void 0 : _a2.call(this, player);
       });
+    } else if (data.type === "puzzleModeChanged") {
+      (_a = this.puzzleModeChangedCallback) == null ? void 0 : _a.call(this, data.mode);
     }
   }
 }

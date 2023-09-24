@@ -15,6 +15,7 @@ export class Client implements PeerInterface {
 
     private newPlayerCallback: ((player: Player) => void) | null = null;
     private playerLeftCallback: ((player: Player) => void) | null = null;
+    private puzzleModeChangedCallback: ((mode: string) => void) | null = null;
 
     onNewPlayer(callback: (player: Player) => void) {
         this.newPlayerCallback = callback;
@@ -22,6 +23,10 @@ export class Client implements PeerInterface {
 
     onPlayerLeft(callback: (player: Player) => void) {
         this.playerLeftCallback = callback;
+    }
+
+    onPuzzleModeChanged(callback: (mode: string) => void) {
+        this.puzzleModeChangedCallback = callback;
     }
 
     constructor(roomId: string, player: Player) {
@@ -49,7 +54,7 @@ export class Client implements PeerInterface {
                 });
 
                 this.connection.on("data", (data) => {
-                    this.interceptMessage(data);
+                    this.handleMessage(data);
                     console.log("connection:data> " + data);
                 });
 
@@ -97,12 +102,18 @@ export class Client implements PeerInterface {
         return this.roomId;
     }
 
-    private interceptMessage(data: any) {
+    public changePuzzleMode(mode: string): void {
+        throw new Error("Clients cannot change puzzle mode");
+    }
+
+    private handleMessage(data: any) {
         if (data.type === "newPlayers") {
             data.players.forEach((player: Player) => {
                 this.allPlayers.push(player);
                 this.newPlayerCallback?.(player);
             });
+        } else if (data.type === "puzzleModeChanged") {
+            this.puzzleModeChangedCallback?.(data.mode);
         }
     }
 }

@@ -3,13 +3,20 @@
     import type { Client } from "./core/client";
     import { onMount } from "svelte";
 
+    import Selector from "./games/selector/Selector.svelte";
+
     export let peer: Host | Client;
 
+    let currentMode = "selector";
     let allPlayers = peer.allPlayers;
     let copyButtonText = "Copy";
 
     peer.onNewPlayer((player) => {
         allPlayers = peer.allPlayers;
+    });
+
+    peer.onPuzzleModeChanged((mode) => {
+        currentMode = mode;
     });
 
     onMount(() => {
@@ -42,4 +49,12 @@
         <input type="text" id="roomLink" readonly />
         <button on:click={copyRoomLinkToClipboard}>{copyButtonText}</button>
     </label>
+</article>
+
+<article>
+    {#if currentMode === "selector"}
+        <Selector {peer} />
+    {:else if currentMode === "game"}
+        <p>Game</p>
+    {/if}
 </article>
